@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Conferencing</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .video-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 70%;
+            background-color: #333;
+        }
+
+        video {
+            max-width: 45%;
+            border: 1px solid #888;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        button {
+            margin: 0 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: #007bff;
+            border-radius: 30px;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            height: 30%;
+            background-color: #f5f5f5;
+            padding: 1rem;
+            border-top: 1px solid #888;
+        }
+
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 0.5rem;
+        }
+
+        #chat-input {
+            padding: 0.9rem;
+            border: 1px solid #888;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            max-width: 100%;
+        }
+
+        #send-button {
+            align-self: flex-end;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1><center>START YOUR VIDEO CHAT</center></h1><br>
+    <div class="container">
+        <div class="video-container">
+            <video id="local-video" muted autoplay></video>
+            <video id="remote-video" autoplay></video>
+        </div>
+        <div class="controls">
+            <button id="start-call">Start Call</button>
+            <button id="end-call">End Call</button>
+            <button id="toggle-audio">Mute Audio</button>
+            <button id="toggle-video">Stop Video</button>
+        </div>
+        <div class="chat-container">
+            <div id="chat"></div>
+            <input type="text" id="chat-input" placeholder="Type a message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const localVideo = document.getElementById('local-video');
+        const remoteVideo = document.getElementById('remote-video');
+        const startCallButton = document.getElementById('start-call');
+        const endCallButton = document.getElementById('end-call');
+        const toggleAudioButton = document.getElementById('toggle-audio');
+        const toggleVideoButton = document.getElementById('toggle-video');
+        const chatContainer = document.getElementById('chat');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+
+        let localStream = null;
+        let remoteStream = null;
+
+        // Get user media
+        async function getMedia() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localVideo.srcObject = localStream;
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+            }
+        }
+
+        // Start call
+        startCallButton.addEventListener('click', () => {
+            if (localStream === null) {
+                getMedia();
+            }
+        });
+
+        // Toggle audio
+        toggleAudioButton.addEventListener('click', () => {
+            localStream.getAudioTracks().forEach(track => {
+                track.enabled = !track.enabled;
+            });
+        });
+
+        // Toggle video
+        toggleVideoButton.addEventListener('click', () => {
+            localStream.getVideoTracks().forEach(track => {
+                track.enabled = !track.enabled;
+            });
+        });
+
+        // End call functionality
+        function endCall() {
+            localStream.getTracks().forEach(track => {
+                track.stop();
+            });
+
+            localVideo.srcObject = null;
+            remoteVideo.srcObject = null;
+            chatContainer.innerHTML = '<p>Call ended.</p>';
+        }
+
+        // Listen for end call button click
+        endCallButton.addEventListener('click', endCall);
+
+        // Chat functionality
+        sendButton.addEventListener('click', () => {
+            const message = chatInput.value;
+            chatInput.value = '';
+
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `You: ${message}`;
+            chatContainer.appendChild(messageElement);
+        });
+
+        // Simulate receiving message
+        function receiveMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `Friend: ${message}`;
+            chatContainer.appendChild(messageElement);
+        }
+
+        // Simulate receiving video stream
+        function receiveRemoteStream(stream) {
+            remoteVideo.srcObject = stream;
+        }
+
+        // Simulate receiving video and chat data
+        setTimeout(() => {
+            receiveMessage('Hey!!');
+            receiveMessage('How are you???');
+            remoteStream = localStream;
+            receiveRemoteStream(remoteStream);
+        }, 3000);
+    </script>
+</body>
+</html>
